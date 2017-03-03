@@ -1,15 +1,8 @@
 import javafx.scene.effect.SepiaTone;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.PreparedStatement;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Map;
-
 
 public class Conn {
 
@@ -417,28 +410,37 @@ public class Conn {
 
 
     // тестирование
-    public ResultSet[] getTestQuestion(ArrayList<Integer> answeredQuestion, int idCourse) throws ClassNotFoundException, SQLException {
+    public void resetAnswered (int idCourse) throws ClassNotFoundException, SQLException {
         if (conn == null)
             Conn();
 
-        ResultSet[] questionData = new ResultSet[2];
-        int answeredSize = answeredQuestion.size();
-        String answered = "";
-        if (answeredSize > 0) {
-            for(int i = 0; i < answeredSize; i++) {
-                if (i > 0)
-                    answered += ",";
-                answered += "" + answeredQuestion.get(i);
-            }
+        String sql = "UPDATE `questions` SET `answered` = 0 WHERE `id_course` = ?";
+        pstmt = conn.prepareStatement(sql);
+        pstmt.setInt(1, idCourse);
+        pstmt.executeUpdate();
+
+    }
+
+    public ResultSet[] getTestQuestion(int answeredQuestion, int idCourse) throws ClassNotFoundException, SQLException {
+        if (conn == null)
+            Conn();
+
+        String sql = "";
+        if (answeredQuestion > 0) {
+            sql = "UPDATE `questions` SET `answered` = 1 WHERE `id` = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, answeredQuestion);
+            pstmt.executeUpdate();
         }
 
+        ResultSet[] questionData = new ResultSet[2];
 
-        String sql = "SELECT `id`, `text_question` FROM `questions` "
-                + "WHERE `id_course` = ? AND `id` NOT IN (?) "
+        sql = "SELECT `id`, `text_question` FROM `questions` "
+                + "WHERE `id_course` = ? AND `answered` = 0 "
                 + "ORDER BY RANDOM() LIMIT 1";
         pstmt = conn.prepareStatement(sql);
         pstmt.setInt(1, idCourse);
-        pstmt.setString(2, answered);
+
         ResultSet question = pstmt.executeQuery();
 
         questionData[0] = question;
@@ -452,7 +454,6 @@ public class Conn {
         ResultSet answers = pstmt.executeQuery();
 
         questionData[1] = answers;
-
 
         return questionData;
     }

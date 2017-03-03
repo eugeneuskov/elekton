@@ -44,7 +44,7 @@ public class Test extends JFrame {
     private int countQuestion;
     private int progressTest = 0;
     private int rightAnswers = 0;
-    private ArrayList<Integer> answeredQuestions = new ArrayList<Integer>();
+    private int answeredQuestions = 0;
     private int countAnswers = 0;
     private JPanel[] answersPane = new JPanel[countAnswers];
     private App app = new App();
@@ -88,7 +88,7 @@ public class Test extends JFrame {
         goToNextButton.setEnabled(false);
         while (question.next()) {
             currentQuestion = question.getInt("id");
-            answeredQuestions.add(answeredQuestions.size(), currentQuestion);
+            answeredQuestions = currentQuestion;
             labelQuestion.setFont(testFont);
             labelQuestion.setText(question.getString("text_question"));
         }
@@ -152,9 +152,11 @@ public class Test extends JFrame {
     private void startTest() {
         rightAnswers = 0;
         progressTest = 0;
-        answeredQuestions.clear();
+        answeredQuestions = 0;
         testData = "{\"testData\":[";
         try {
+            countQuestion = conn.getCountQuestionsByCourse(currentCourse);
+            conn.resetAnswered(currentCourse);
             GridBagConstraints c = setDefaultC();
             idTest = conn.startTest(activeUserId, currentCourse);
             ResultSet[] questionData = conn.getTestQuestion(answeredQuestions, currentCourse);
@@ -238,7 +240,6 @@ public class Test extends JFrame {
                 while (courses.next())
                     boxCourses.addItem(new ComboItem(courses.getInt(1), courses.getString(2)));
                 currentCourse = conn.getFirstCourse();
-                countQuestion = conn.getCountQuestionsByCourse(currentCourse);
                 nameRandomCourse.setVisible(false);
                 chooseCourses.setVisible(true);
                 boxCourses.setVisible(true);
@@ -314,8 +315,12 @@ public class Test extends JFrame {
                         ResultSet[] questionData = conn.getTestQuestion(answeredQuestions, currentCourse);
                         displayQuestion(questionData, c);
                     }
-                    catch(ClassNotFoundException cnfe) {}
-                    catch (SQLException sqle){}
+                    catch(ClassNotFoundException cnfe) {
+                        System.out.println("error cnf");
+                    }
+                    catch (SQLException sqle){
+                        System.out.println("error sql");
+                    }
                 }
                 goToNextButton.setVisible(resumeTest);
             }
